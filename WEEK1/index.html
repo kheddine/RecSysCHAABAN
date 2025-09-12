@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Random Lunch Recommender</title>
   <link rel="stylesheet" href="style.css" />
-  <meta name="description" content="Simple web app that recommends random lunch menus (Pizza, Sushi, etc.).">
 </head>
 <body>
   <main class="container">
@@ -16,7 +15,7 @@
 
     <section class="card">
       <div class="image-wrap">
-        <img id="meal-image" alt="Lunch image" src="https://picsum.photos/seed/lunch/640/400" />
+        <img id="meal-image" alt="Lunch image" src="https://source.unsplash.com/800x500/?lunch,food" />
       </div>
       <div class="content">
         <p id="result" class="result">Your lunch awaits…</p>
@@ -31,17 +30,9 @@
 
     <footer class="footer">
       <p class="subtle">
-        Key insight: start random with <code>Math.random()</code>, then plug in preferences/history later for personalization.
+        Using <code>Math.random()</code> + Unsplash food images.  
+        Next step: bias picks with your preferences!
       </p>
-      <details>
-        <summary>TODOs / Tips</summary>
-        <ul>
-          <li>🖼 <strong>Fix images & files:</strong> Use the <code>image</code> URLs below or replace them with your own.
-            No local assets needed for GitHub Pages.</li>
-          <li>🍱 Add/remove items in <code>script.js</code> → <code>LUNCHES</code>.</li>
-          <li>✨ Personalize later: store user likes in <code>localStorage</code> and bias the random pick.</li>
-        </ul>
-      </details>
     </footer>
   </main>
 
