@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content-Based Movie Recommender</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Content-Based Movie Recommender</h1>
+      <p class="subtle">
+        Select a movie you like, and we'll find similar ones for you!<br />
+        <small>
+          Tip: Ensure <code>u.item</code> and <code>u.genre</code> (and optionally <code>u.data</code>) are in the same folder as this page.
+        </small>
+      </p>
+    </header>
+
+    <section class="controls">
+      <label for="movie-select" class="sr-only">Choose a movie</label>
+      <select id="movie-select" aria-label="Movie to match">
+        <option disabled selected>Loading movies…</option>
+      </select>
+
+      <button id="rec-btn" type="button" aria-label="Get Recommendations">
+        Get Recommendations
+      </button>
+    </section>
+
+    <section id="result-box" aria-live="polite">
+      <p id="result" class="subtle">Movies and recommendations will appear here.</p>
+      <ol id="rec-list" class="rec-list"></ol>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Similarity uses the <strong>cosine similarity</strong> on genre vectors.
+        Ties are broken by average rating (from <code>u.data</code>, if present), then by rating count, then title.
+      </p>
+    </footer>
+  </main>
+
+  <!-- IMPORTANT: data.js must be loaded BEFORE script.js -->
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
