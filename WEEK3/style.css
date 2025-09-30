@@ -1,61 +1,62 @@
 body {
   font-family: Arial, sans-serif;
-  background: #1c1c1c;
-  color: #f0f0f0;
+  background: #f4f6f8;
+  color: #333;
   margin: 0;
-  padding: 0;
-}
-
-header {
-  background: #ff4757;
-  text-align: center;
-  padding: 1rem;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
 main {
-  padding: 2rem;
-  max-width: 900px;
-  margin: auto;
+  background: #fff;
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
 }
 
-.user-input {
+h1 {
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+.controls {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+}
+
+select, button {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 button {
-  background: #2ed573;
+  background: #2ecc71;
+  color: #fff;
   border: none;
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  font-weight: bold;
   cursor: pointer;
   transition: background 0.3s;
 }
 
 button:hover {
-  background: #1eae5a;
+  background: #27ae60;
 }
 
-.results h2 {
-  margin-bottom: 1rem;
-}
-
-#recommendations {
-  list-style: none;
-  padding: 0;
-}
-
-#recommendations li {
-  background: #2f3542;
-  margin: 0.5rem 0;
-  padding: 1rem;
-  border-radius: 8px;
+#result {
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  color: #34495e;
 }
