@@ -1,78 +1,99 @@
-/* data.js — GitHub Pages friendly (expects u.item & u.data in the repo root)
-   Exposes: loadData(), parseItemData(), parseRatingData(), and live counts.
-*/
+// data.js
+// ------- Data loading & parsing for MovieLens 100K -------
 
-const MOVIELENS_BASE = "."; // same folder as index.html
+// Globals required by the spec
+let numUsers;
+let numMovies;
 
-let movies = new Map();     // movieId -> { id, title, year }
-let ratings = [];           // { userId, movieId, rating }
-let numUsers = 0;
-let numMovies = 0;
+// Additional shared globals
+let movies = []; // [{id0: number, title: string}]
+let ratingsData = {
+  userIds: [],   // zero-based
+  movieIds: [],  // zero-based
+  ratings: []    // 1..5
+};
+let userIdList = []; // distinct zero-based ids present in ratings
 
-/* Parse u.item (pipe-separated) */
-function parseItemData(text) {
-  const map = new Map();
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  for (const line of lines) {
-    const parts = line.split("|");
-    const id = parseInt(parts[0], 10);
-    const rawTitle = parts[1] || `Movie ${id}`;
-    let year = null;
-    const m = rawTitle.match(/\((\d{4})\)$/);
-    if (m) year = m[1];
-    const title = rawTitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
-    map.set(id, { id, title: title || `Movie ${id}`, year });
-  }
-  return map;
-}
-
-/* Parse u.data (tab-separated): userId \t itemId \t rating \t timestamp */
-function parseRatingData(text) {
-  const arr = [];
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  let maxU = 0, maxI = 0;
-
-  for (const line of lines) {
-    const [u, i, r] = line.split(/\s+/);
-    const userId = parseInt(u, 10);
-    const movieId = parseInt(i, 10);
-    const rating = parseFloat(r);
-    if (Number.isFinite(userId) && Number.isFinite(movieId) && Number.isFinite(rating)) {
-      arr.push({ userId, movieId, rating });
-      if (userId > maxU) maxU = userId;
-      if (movieId > maxI) maxI = movieId;
-    }
-  }
-  numUsers = maxU;
-  numMovies = maxI;
-  return arr;
-}
-
-/* Fetch and populate globals (same-origin on GH Pages) */
+/**
+ * Fetch and parse MovieLens 100K u.item and u.data.
+ * Populates: movies[], ratingsData, userIdList, numUsers, numMovies
+ */
 async function loadData() {
-  const [itemRes, dataRes] = await Promise.all([
-    fetch(`${MOVIELENS_BASE}/u.item`),
-    fetch(`${MOVIELENS_BASE}/u.data`)
+  const itemURL = 'https://files.grouplens.org/datasets/movielens/ml-100k/u.item';
+  const dataURL = 'https://files.grouplens.org/datasets/movielens/ml-100k/u.data';
+
+  const [itemResp, dataResp] = await Promise.all([
+    fetch(itemURL),
+    fetch(dataURL)
   ]);
 
-  if (!itemRes.ok || !dataRes.ok) {
-    throw new Error("Failed to fetch u.item/u.data. Make sure both files are in the repo root.");
+  if (!itemResp.ok || !dataResp.ok) {
+    throw new Error('Failed to fetch MovieLens files. Please check your network/CORS.');
   }
 
-  const [itemText, dataText] = await Promise.all([itemRes.text(), dataRes.text()]);
-  movies = parseItemData(itemText);
-  ratings = parseRatingData(dataText);
-  if (movies.size > numMovies) numMovies = movies.size;
+  const [itemText, dataText] = await Promise.all([
+    itemResp.text(),
+    dataResp.text()
+  ]);
+
+  parseItemData(itemText);
+  parseRatingData(dataText);
+
+  // Derive counts
+  const maxUser = Math.max(...ratingsData.userIds) + 1;   // zero-based -> +1
+  const maxMovie = Math.max(...ratingsData.movieIds) + 1; // zero-based -> +1
+
+  numUsers = maxUser;
+  numMovies = Math.max(maxMovie, movies.length); // safety if a movie id exists without title
+
+  // Build distinct user id list for populating the dropdown
+  userIdList = Array.from(new Set(ratingsData.userIds)).sort((a,b)=>a-b);
 }
 
-/* Small debug helper & global exposure */
-window.__ml100k__ = {
-  get movies(){ return movies; },
-  get ratings(){ return ratings; },
-  get numUsers(){ return numUsers; },
-  get numMovies(){ return numMovies; }
-};
+/**
+ * Parse u.item (pipe-delimited). Keeps id and title.
+ * @param {string} text
+ */
+function parseItemData(text) {
+  movies = [];
+  const lines = text.split('\n').filter(Boolean);
+  for (const line of lines) {
+    // Format: movie id | movie title | release date | video release date | IMDb URL | ...genre flags
+    const parts = line.split('|');
+    if (parts.length >= 2) {
+      const rawId = Number(parts[0]);
+      const id0 = rawId - 1; // zero-based for embeddings
+      const title = parts[1].trim();
+      if (!Number.isNaN(id0) && title) {
+        movies[id0] = { id0, title }; // sparse-safe assignment
+      }
+    }
+  }
+  // Fill any missing titles as "Movie #<id>"
+  for (let i=0; i<movies.length; i++){
+    if (!movies[i]) movies[i] = { id0: i, title: `Movie #${i+1}` };
+  }
+}
 
-window.loadData = loadData;
-window.parseItemData = parseItemData;
-window.parseRatingData = parseRatingData;
+/**
+ * Parse u.data (tab/whitespace-delimited)
+ * @param {string} text
+ */
+function parseRatingData(text) {
+  ratingsData = { userIds: [], movieIds: [], ratings: [] };
+  const lines = text.split('\n').filter(Boolean);
+  for (const line of lines) {
+    // Format: user id \t item id \t rating \t timestamp
+    const parts = line.trim().split(/\s+/);
+    if (parts.length >= 3) {
+      const u = Number(parts[0]) - 1; // zero-based
+      const m = Number(parts[1]) - 1; // zero-based
+      const r = Number(parts[2]);
+      if ([u,m,r].every(x => Number.isFinite(x))) {
+        ratingsData.userIds.push(u);
+        ratingsData.movieIds.push(m);
+        ratingsData.ratings.push(r);
+      }
+    }
+  }
+}
