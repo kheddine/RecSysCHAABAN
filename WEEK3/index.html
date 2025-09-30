@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Movie Recommendation System</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matrix Factorization Movie Recommender (TensorFlow.js)</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main>
-    <h1>🎬 Movie Recommendation System</h1>
-    <div class="controls">
-      <label for="user-select">Select User:</label>
-      <select id="user-select"></select>
+  <main class="container">
+    <h1>🎬 Matrix Factorization Movie Recommender</h1>
+    <p class="subhead">
+      Trains a collaborative filtering model on <em>MovieLens 100K</em> entirely in your browser using TensorFlow.js.
+    </p>
 
-      <label for="movie-select">Select Movie:</label>
-      <select id="movie-select"></select>
+    <section class="controls">
+      <div class="field">
+        <label for="user-select">Select User</label>
+        <select id="user-select" disabled>
+          <option>Loading users…</option>
+        </select>
+      </div>
 
-      <button onclick="predictRating()">Predict Rating</button>
-    </div>
+      <div class="field">
+        <label for="movie-select">Select Movie</label>
+        <select id="movie-select" disabled>
+          <option>Loading movies…</option>
+        </select>
+      </div>
 
-    <div id="result">Loading data and training model...</div>
+      <div class="actions">
+        <button id="predict-btn" onclick="predictRating()" disabled>Predict Rating</button>
+      </div>
+    </section>
+
+    <section id="status">
+      <div id="result" class="card">
+        <div class="dot-pulse" aria-hidden="true"></div>
+        <div><strong>Status:</strong> Loading MovieLens data…</div>
+      </div>
+    </section>
   </main>
 
-  <!-- Scripts -->
+  <!-- TensorFlow.js (must be first), then data.js, then script.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="data.js"></script>
   <script src="script.js"></script>
