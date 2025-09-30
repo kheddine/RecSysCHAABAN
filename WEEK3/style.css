@@ -1,0 +1,66 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #1c1c1c;
+  color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: #ff4757;
+  text-align: center;
+  padding: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+header p {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+main {
+  padding: 2rem;
+  max-width: 800px;
+  margin: auto;
+}
+
+.user-input {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+button {
+  background: #2ed573;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #1eae5a;
+}
+
+.results h2 {
+  margin-bottom: 1rem;
+}
+
+#recommendations {
+  list-style: none;
+  padding: 0;
+}
+
+#recommendations li {
+  background: #2f3542;
+  margin: 0.5rem 0;
+  padding: 1rem;
+  border-radius: 8px;
+}
