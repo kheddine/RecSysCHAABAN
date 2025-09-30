@@ -1,51 +1,48 @@
-// Global dataset storage
-let movies = [];        // movie titles
-let ratings = [];       // ratings matrix [user][movie]
+let movies = [];
+let ratings = [];
 let numUsers = 0;
 let numMovies = 0;
 
 /**
- * Load MovieLens data files and parse them.
- * Expects u.item and u.data to be placed in the same folder.
- * @param {Function} callback - runs after data is fully loaded
+ * Load data files and parse them
  */
-function loadData(callback) {
-  Promise.all([
-    fetch("u.item").then(res => res.text()),
-    fetch("u.data").then(res => res.text())
-  ])
-  .then(([itemText, ratingText]) => {
-    parseItemData(itemText);
-    parseRatingData(ratingText);
-    if (callback) callback();
-  })
-  .catch(err => console.error("Error loading data:", err));
+async function loadData() {
+  const [itemText, ratingText] = await Promise.all([
+    fetch("u.item").then(r => r.text()),
+    fetch("u.data").then(r => r.text())
+  ]);
+
+  parseItemData(itemText);
+  parseRatingData(ratingText);
 }
 
 /**
- * Parse u.item into movies[]
+ * Parse movie metadata (u.item)
  */
 function parseItemData(text) {
   const lines = text.trim().split("\n");
-  movies = lines.map(line => line.split("|")[1]); // title is second field
+  movies = lines.map(line => {
+    const parts = line.split("|");
+    return { id: parseInt(parts[0]), title: parts[1] };
+  });
   numMovies = movies.length;
 }
 
 /**
- * Parse u.data into ratings[][] and numUsers
+ * Parse ratings (u.data)
  */
 function parseRatingData(text) {
   const lines = text.trim().split("\n");
-  let maxUser = 0;
+  let maxUserId = 0;
 
-  // Find maximum user ID
+  // Get max user ID
   lines.forEach(line => {
     const [userId] = line.split("\t").map(Number);
-    if (userId > maxUser) maxUser = userId;
+    if (userId > maxUserId) maxUserId = userId;
   });
-  numUsers = maxUser;
+  numUsers = maxUserId;
 
-  // Initialize matrix with zeros
+  // Initialize matrix
   ratings = Array.from({ length: numUsers }, () => Array(numMovies).fill(0));
 
   // Fill with ratings
