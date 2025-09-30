@@ -3,45 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Matrix Factorization Movie Recommender (TensorFlow.js)</title>
+  <title>Movie Recommender</title>
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgo=" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="container">
-    <h1>🎬 Matrix Factorization Movie Recommender</h1>
-    <p class="subhead">
-      Trains a collaborative filtering model on <em>MovieLens 100K</em> entirely in your browser using TensorFlow.js.
-    </p>
+  <!-- iOS-style navigation bar -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="nav-subtitle">Recommender</div>
+      <h1 class="nav-title">Movies</h1>
+    </div>
+  </header>
 
-    <section class="controls">
-      <div class="field">
-        <label for="user-select">Select User</label>
-        <select id="user-select" disabled>
-          <option>Loading users…</option>
-        </select>
-      </div>
+  <main class="page">
+    <!-- Frosted card -->
+    <section class="card">
+      <h2 class="section-title">Matrix Factorization</h2>
+      <p class="section-sub">
+        Trains on <em>MovieLens&nbsp;100K</em> directly in your browser with TensorFlow.js.
+      </p>
 
-      <div class="field">
-        <label for="movie-select">Select Movie</label>
-        <select id="movie-select" disabled>
-          <option>Loading movies…</option>
-        </select>
-      </div>
+      <div class="form">
+        <div class="field">
+          <label for="user-select">Select User</label>
+          <div class="input-wrap">
+            <select id="user-select" disabled>
+              <option>Loading users…</option>
+            </select>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
 
-      <div class="actions">
-        <button id="predict-btn" onclick="predictRating()" disabled>Predict Rating</button>
+        <div class="field">
+          <label for="movie-select">Select Movie</label>
+          <div class="input-wrap">
+            <select id="movie-select" disabled>
+              <option>Loading movies…</option>
+            </select>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+
+        <button id="predict-btn" class="btn-primary" onclick="predictRating()" disabled>
+          Predict Rating
+        </button>
       </div>
     </section>
 
-    <section id="status">
-      <div id="result" class="card">
-        <div class="dot-pulse" aria-hidden="true"></div>
+    <section id="status" class="card">
+      <div id="result" class="result">
+        <div class="spinner" aria-hidden="true"></div>
         <div><strong>Status:</strong> Loading MovieLens data…</div>
       </div>
     </section>
+
+    <footer class="footnote">
+      <span>Powered by TensorFlow.js · Runs fully in-browser</span>
+    </footer>
   </main>
 
-  <!-- TensorFlow.js (must be first), then data.js, then script.js -->
+  <!-- Scripts in required order -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="data.js"></script>
   <script src="script.js"></script>
