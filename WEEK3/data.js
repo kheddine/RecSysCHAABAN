@@ -1,135 +1,99 @@
-let model;
+/* data.js
+   - Loads MovieLens 100K files: u.item, u.data
+   - Exposes: loadData(), parseItemData(), parseRatingData()
+   - Globals: movies (Map by movieId), ratings (Array), numUsers, numMovies
+*/
+
+const MOVIELENS_BASE =
+  "https://files.grouplens.org/datasets/movielens/ml-100k";
+
+let movies = new Map();     // movieId (1-based) -> { id, title, year }
+let ratings = [];           // { userId (1-based), movieId (1-based), rating }
+let numUsers = 0;
+let numMovies = 0;
 
 /**
- * Initialize on window load
+ * Parse u.item (pipe '|' separated)
+ * line format (we only need first 2-3 fields):
+ *  movie id | movie title | release date | ...
  */
-window.onload = async () => {
-  const resultEl = document.getElementById("result");
-  resultEl.textContent = "Loading dataset...";
+function parseItemData(text) {
+  const result = new Map();
+  const lines = text.split(/\r?\n/).filter(Boolean);
 
-  await loadData();
-
-  populateDropdowns();
-
-  resultEl.textContent = "Training model...";
-  await trainModel();
-
-  resultEl.textContent = "Model trained! Select user and movie to predict rating.";
-};
-
-/**
- * Populate dropdowns with users and movies
- */
-function populateDropdowns() {
-  const userSelect = document.getElementById("user-select");
-  const movieSelect = document.getElementById("movie-select");
-
-  for (let u = 1; u <= numUsers; u++) {
-    let opt = document.createElement("option");
-    opt.value = u;
-    opt.textContent = `User ${u}`;
-    userSelect.appendChild(opt);
+  for (const line of lines) {
+    const parts = line.split("|");
+    const id = parseInt(parts[0], 10);
+    const rawTitle = parts[1] || `Movie ${id}`;
+    // Try to extract year from title "(1995)" or from release date column
+    let year = null;
+    const m = rawTitle.match(/\((\d{4})\)$/);
+    if (m) year = m[1];
+    const title = rawTitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
+    result.set(id, { id, title: title || `Movie ${id}`, year });
   }
-
-  movies.forEach(m => {
-    let opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = m.title;
-    movieSelect.appendChild(opt);
-  });
+  return result;
 }
 
 /**
- * Define MF model with embeddings
+ * Parse u.data (tab separated): user id \t item id \t rating \t timestamp
  */
-function createModel(numUsers, numMovies, latentDim = 20) {
-  const userInput = tf.input({ shape: [1], dtype: "int32", name: "user" });
-  const movieInput = tf.input({ shape: [1], dtype: "int32", name: "movie" });
+function parseRatingData(text) {
+  const result = [];
+  const lines = text.split(/\r?\n/).filter(Boolean);
 
-  const userEmbedding = tf.layers.embedding({
-    inputDim: numUsers + 1,
-    outputDim: latentDim,
-    embeddingsInitializer: "heNormal"
-  }).apply(userInput);
+  let maxUser = 0;
+  let maxItem = 0;
 
-  const movieEmbedding = tf.layers.embedding({
-    inputDim: numMovies + 1,
-    outputDim: latentDim,
-    embeddingsInitializer: "heNormal"
-  }).apply(movieInput);
-
-  const userVec = tf.layers.flatten().apply(userEmbedding);
-  const movieVec = tf.layers.flatten().apply(movieEmbedding);
-
-  const dot = tf.layers.dot({ axes: 1 }).apply([userVec, movieVec]);
-
-  const output = tf.layers.dense({ units: 1, activation: "linear" }).apply(dot);
-
-  const model = tf.model({ inputs: [userInput, movieInput], outputs: output });
-  return model;
-}
-
-/**
- * Train MF model
- */
-async function trainModel() {
-  model = createModel(numUsers, numMovies, 20);
-  model.compile({
-    optimizer: tf.train.adam(0.001),
-    loss: "meanSquaredError"
-  });
-
-  const userIds = [];
-  const movieIds = [];
-  const labels = [];
-
-  for (let u = 0; u < numUsers; u++) {
-    for (let m = 0; m < numMovies; m++) {
-      if (ratings[u][m] > 0) {
-        userIds.push(u + 1);
-        movieIds.push(m + 1);
-        labels.push(ratings[u][m]);
-      }
+  for (const line of lines) {
+    const [u, i, r] = line.split(/\s+/);
+    const userId = parseInt(u, 10);
+    const movieId = parseInt(i, 10);
+    const rating = parseFloat(r);
+    if (Number.isFinite(userId) && Number.isFinite(movieId) && Number.isFinite(rating)) {
+      result.push({ userId, movieId, rating });
+      if (userId > maxUser) maxUser = userId;
+      if (movieId > maxItem) maxItem = movieId;
     }
   }
 
-  const userTensor = tf.tensor2d(userIds, [userIds.length, 1], "int32");
-  const movieTensor = tf.tensor2d(movieIds, [movieIds.length, 1], "int32");
-  const ratingTensor = tf.tensor2d(labels, [labels.length, 1], "float32");
+  // Update globals for counts (MovieLens IDs are dense and 1-based)
+  numUsers = maxUser;
+  numMovies = maxItem;
 
-  await model.fit([userTensor, movieTensor], ratingTensor, {
-    epochs: 5,
-    batchSize: 64,
-    verbose: 1
-  });
-
-  userTensor.dispose();
-  movieTensor.dispose();
-  ratingTensor.dispose();
+  return result;
 }
 
 /**
- * Predict rating for selected user & movie
+ * Fetch and load both files, then populate globals.
  */
-async function predictRating() {
-  const userId = parseInt(document.getElementById("user-select").value);
-  const movieId = parseInt(document.getElementById("movie-select").value);
-  const resultEl = document.getElementById("result");
+async function loadData() {
+  const [itemRes, dataRes] = await Promise.all([
+    fetch(`${MOVIELENS_BASE}/u.item`, { mode: "cors" }),
+    fetch(`${MOVIELENS_BASE}/u.data`, { mode: "cors" })
+  ]);
 
-  if (!model) {
-    resultEl.textContent = "Model not ready yet.";
-    return;
+  if (!itemRes.ok || !dataRes.ok) {
+    throw new Error(`Failed to fetch MovieLens data (HTTP ${itemRes.status}/${dataRes.status}).`);
   }
 
-  const userTensor = tf.tensor2d([userId], [1, 1], "int32");
-  const movieTensor = tf.tensor2d([movieId], [1, 1], "int32");
+  const [itemText, dataText] = await Promise.all([itemRes.text(), dataRes.text()]);
 
-  const prediction = model.predict([userTensor, movieTensor]);
-  const value = (await prediction.data())[0];
+  movies = parseItemData(itemText);
+  ratings = parseRatingData(dataText);
 
-  resultEl.textContent = `Predicted rating for User ${userId} on "${movies[movieId - 1].title}" is ${value.toFixed(2)} ⭐`;
-
-  userTensor.dispose();
-  movieTensor.dispose();
-  prediction.dispose();
+  // Safety: if items file had more movies than seen in ratings, respect that as numMovies
+  if (movies.size > numMovies) numMovies = movies.size;
 }
+
+// For dev console visibility
+window.__ml100k__ = { movies, ratings, get numUsers(){return numUsers;}, get numMovies(){return numMovies;} };
+
+/* Export names for clarity in other scripts (browser global scope) */
+window.loadData = loadData;
+window.parseItemData = parseItemData;
+window.parseRatingData = parseRatingData;
+window.movies = movies;
+window.ratings = ratings;
+window.numUsers = numUsers;
+window.numMovies = numMovies;
