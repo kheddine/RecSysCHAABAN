@@ -1,69 +1,43 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Movie Recommender</title>
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgo=" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Matrix Factorization Recommender (TensorFlow.js)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- iOS-style navigation bar -->
-  <header class="nav">
-    <div class="nav-inner">
-      <div class="nav-subtitle">Recommender</div>
-      <h1 class="nav-title">Movies</h1>
-    </div>
-  </header>
+  <main class="container">
+    <header>
+      <h1>Matrix Factorization Recommender</h1>
+      <p class="subtle">MovieLens 100K — trained in your browser with TensorFlow.js</p>
+    </header>
 
-  <main class="page">
-    <!-- Frosted card -->
     <section class="card">
-      <h2 class="section-title">Matrix Factorization</h2>
-      <p class="section-sub">
-        Trains on <em>MovieLens&nbsp;100K</em> directly in your browser with TensorFlow.js.
-      </p>
-
-      <div class="form">
-        <div class="field">
-          <label for="user-select">Select User</label>
-          <div class="input-wrap">
-            <select id="user-select" disabled>
-              <option>Loading users…</option>
-            </select>
-            <span class="chevron" aria-hidden="true">⌄</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="movie-select">Select Movie</label>
-          <div class="input-wrap">
-            <select id="movie-select" disabled>
-              <option>Loading movies…</option>
-            </select>
-            <span class="chevron" aria-hidden="true">⌄</span>
-          </div>
-        </div>
-
-        <button id="predict-btn" class="btn-primary" onclick="predictRating()" disabled>
-          Predict Rating
-        </button>
+      <div class="row">
+        <label for="user-select">Select User</label>
+        <select id="user-select" aria-label="Select a user"></select>
       </div>
+
+      <div class="row">
+        <label for="movie-select">Select Movie</label>
+        <select id="movie-select" aria-label="Select a movie"></select>
+      </div>
+
+      <div class="actions">
+        <button id="predict-btn" onclick="predictRating()">Predict Rating</button>
+      </div>
+
+      <div id="result" role="status" aria-live="polite">Loading…</div>
     </section>
 
-    <section id="status" class="card">
-      <div id="result" class="result">
-        <div class="spinner" aria-hidden="true"></div>
-        <div><strong>Status:</strong> Loading MovieLens data…</div>
-      </div>
-    </section>
-
-    <footer class="footnote">
-      <span>Powered by TensorFlow.js · Runs fully in-browser</span>
+    <footer class="footer">
+      <small>Data: <a href="https://files.grouplens.org/datasets/movielens/ml-100k/" target="_blank" rel="noopener">MovieLens 100K</a></small>
     </footer>
   </main>
 
-  <!-- Scripts in required order -->
+  <!-- Load TensorFlow.js first, then data.js, then script.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="data.js"></script>
   <script src="script.js"></script>
