@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Recommendation System</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header>
+    <h1>🎬 Movie Recommendation System</h1>
+    <p>Powered by Matrix Factorization</p>
+  </header>
+
+  <main>
+    <section class="user-input">
+      <label for="userSelect">Select User:</label>
+      <select id="userSelect"></select>
+      <button id="recommendBtn">Get Recommendations</button>
+    </section>
+
+    <section class="results">
+      <h2>Recommended Movies</h2>
+      <ul id="recommendations"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with ❤️ using JavaScript</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
