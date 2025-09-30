@@ -1,27 +1,61 @@
-import pandas as pd
+// Global storage
+let movies = [];        // array of movie titles
+let ratings = [];       // 2D ratings matrix [user][movie]
+let numUsers = 0;
+let numMovies = 0;
 
-# Load dataset
-ratings_df = pd.read_csv("u.data", sep="\t", names=["user_id", "movie_id", "rating", "timestamp"])
-movies_df = pd.read_csv("u.item", sep="|", names=["movie_id", "title"], usecols=[0, 1], encoding="latin-1")
+/**
+ * Load both datasets asynchronously and then parse them
+ * @param {Function} callback - called after both files are loaded and parsed
+ */
+function loadData(callback) {
+  Promise.all([
+    fetch("u.item").then(res => res.text()),
+    fetch("u.data").then(res => res.text())
+  ])
+  .then(([itemText, ratingText]) => {
+    parseItemData(itemText);
+    parseRatingData(ratingText);
+    if (callback) callback();
+  })
+  .catch(err => console.error("Error loading data:", err));
+}
 
-# Map users and movies to indices
-users = sorted(ratings_df["user_id"].unique())
-movies = movies_df.sort_values("movie_id")["title"].tolist()
+/**
+ * Parse u.item file content into movies[]
+ * @param {string} text - raw file text
+ */
+function parseItemData(text) {
+  const lines = text.trim().split("\n");
+  movies = lines.map(line => {
+    const parts = line.split("|");
+    return parts[1]; // movie title
+  });
+  numMovies = movies.length;
+}
 
-user_to_idx = {u: i for i, u in enumerate(users)}
-movie_to_idx = {m: i for i, m in enumerate(movies_df["movie_id"].values)}
+/**
+ * Parse u.data file content into ratings[] and set numUsers
+ * @param {string} text - raw file text
+ */
+function parseRatingData(text) {
+  const lines = text.trim().split("\n");
+  let userIds = new Set();
 
-# Initialize rating matrix
-ratings = [[0] * len(movies) for _ in range(len(users))]
+  // First pass: get unique users
+  lines.forEach(line => {
+    const [userId] = line.split("\t").map(Number);
+    userIds.add(userId);
+  });
 
-# Fill ratings
-for _, row in ratings_df.iterrows():
-    u_idx = user_to_idx[row["user_id"]]
-    m_idx = movie_to_idx[row["movie_id"]]
-    ratings[u_idx][m_idx] = int(row["rating"])
+  numUsers = Math.max(...userIds); // user IDs are sequential in MovieLens
 
-# Write to data.js
-with open("data.js", "w", encoding="utf-8") as f:
-    f.write("const users = " + str(users) + ";\n\n")
-    f.write("const movies = " + str(movies) + ";\n\n")
-    f.write("const ratings = " + str(ratings) + ";\n")
+  // Initialize ratings matrix with zeros
+  ratings = Array.from({ length: numUsers }, () => Array(numMovies).fill(0));
+
+  // Fill matrix
+  lines.forEach(line => {
+    const [userId, movieId, rating] = line.split("\t").map(Number);
+    ratings[userId - 1][movieId - 1] = rating;
+  });
+}
