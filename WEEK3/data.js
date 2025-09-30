@@ -1,12 +1,13 @@
-// Global storage
-let movies = [];        // array of movie titles
-let ratings = [];       // 2D ratings matrix [user][movie]
+// Global dataset storage
+let movies = [];        // movie titles
+let ratings = [];       // ratings matrix [user][movie]
 let numUsers = 0;
 let numMovies = 0;
 
 /**
- * Load both datasets asynchronously and then parse them
- * @param {Function} callback - called after both files are loaded and parsed
+ * Load MovieLens data files and parse them.
+ * Expects u.item and u.data to be placed in the same folder.
+ * @param {Function} callback - runs after data is fully loaded
  */
 function loadData(callback) {
   Promise.all([
@@ -22,38 +23,32 @@ function loadData(callback) {
 }
 
 /**
- * Parse u.item file content into movies[]
- * @param {string} text - raw file text
+ * Parse u.item into movies[]
  */
 function parseItemData(text) {
   const lines = text.trim().split("\n");
-  movies = lines.map(line => {
-    const parts = line.split("|");
-    return parts[1]; // movie title
-  });
+  movies = lines.map(line => line.split("|")[1]); // title is second field
   numMovies = movies.length;
 }
 
 /**
- * Parse u.data file content into ratings[] and set numUsers
- * @param {string} text - raw file text
+ * Parse u.data into ratings[][] and numUsers
  */
 function parseRatingData(text) {
   const lines = text.trim().split("\n");
-  let userIds = new Set();
+  let maxUser = 0;
 
-  // First pass: get unique users
+  // Find maximum user ID
   lines.forEach(line => {
     const [userId] = line.split("\t").map(Number);
-    userIds.add(userId);
+    if (userId > maxUser) maxUser = userId;
   });
+  numUsers = maxUser;
 
-  numUsers = Math.max(...userIds); // user IDs are sequential in MovieLens
-
-  // Initialize ratings matrix with zeros
+  // Initialize matrix with zeros
   ratings = Array.from({ length: numUsers }, () => Array(numMovies).fill(0));
 
-  // Fill matrix
+  // Fill with ratings
   lines.forEach(line => {
     const [userId, movieId, rating] = line.split("\t").map(Number);
     ratings[userId - 1][movieId - 1] = rating;
