@@ -17,14 +17,9 @@ header h1 {
   font-size: 2rem;
 }
 
-header p {
-  margin: 0.5rem 0 0;
-  font-size: 1rem;
-}
-
 main {
   padding: 2rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: auto;
 }
 
