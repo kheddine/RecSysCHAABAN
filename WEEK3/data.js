@@ -1,22 +1,18 @@
-/* data.js
-   Loads MovieLens files (u.item, u.data) from the same folder as index.html.
-   Works fine on GitHub Pages because files are same-origin.
+/* data.js — GitHub Pages friendly (expects u.item & u.data in the repo root)
+   Exposes: loadData(), parseItemData(), parseRatingData(), and live counts.
 */
 
-const MOVIELENS_BASE = ".";  // current directory
+const MOVIELENS_BASE = "."; // same folder as index.html
 
 let movies = new Map();     // movieId -> { id, title, year }
 let ratings = [];           // { userId, movieId, rating }
 let numUsers = 0;
 let numMovies = 0;
 
-/**
- * Parse u.item (pipe '|' separated)
- */
+/* Parse u.item (pipe-separated) */
 function parseItemData(text) {
-  const result = new Map();
+  const map = new Map();
   const lines = text.split(/\r?\n/).filter(Boolean);
-
   for (const line of lines) {
     const parts = line.split("|");
     const id = parseInt(parts[0], 10);
@@ -25,20 +21,16 @@ function parseItemData(text) {
     const m = rawTitle.match(/\((\d{4})\)$/);
     if (m) year = m[1];
     const title = rawTitle.replace(/\s*\(\d{4}\)\s*$/, "").trim();
-    result.set(id, { id, title: title || `Movie ${id}`, year });
+    map.set(id, { id, title: title || `Movie ${id}`, year });
   }
-  return result;
+  return map;
 }
 
-/**
- * Parse u.data (tab separated)
- */
+/* Parse u.data (tab-separated): userId \t itemId \t rating \t timestamp */
 function parseRatingData(text) {
-  const result = [];
+  const arr = [];
   const lines = text.split(/\r?\n/).filter(Boolean);
-
-  let maxUser = 0;
-  let maxItem = 0;
+  let maxU = 0, maxI = 0;
 
   for (const line of lines) {
     const [u, i, r] = line.split(/\s+/);
@@ -46,21 +38,17 @@ function parseRatingData(text) {
     const movieId = parseInt(i, 10);
     const rating = parseFloat(r);
     if (Number.isFinite(userId) && Number.isFinite(movieId) && Number.isFinite(rating)) {
-      result.push({ userId, movieId, rating });
-      if (userId > maxUser) maxUser = userId;
-      if (movieId > maxItem) maxItem = movieId;
+      arr.push({ userId, movieId, rating });
+      if (userId > maxU) maxU = userId;
+      if (movieId > maxI) maxI = movieId;
     }
   }
-
-  numUsers = maxUser;
-  numMovies = maxItem;
-
-  return result;
+  numUsers = maxU;
+  numMovies = maxI;
+  return arr;
 }
 
-/**
- * Load both files from the repo root
- */
+/* Fetch and populate globals (same-origin on GH Pages) */
 async function loadData() {
   const [itemRes, dataRes] = await Promise.all([
     fetch(`${MOVIELENS_BASE}/u.item`),
@@ -68,29 +56,23 @@ async function loadData() {
   ]);
 
   if (!itemRes.ok || !dataRes.ok) {
-    throw new Error(`Failed to fetch u.item or u.data (check they exist in repo root).`);
+    throw new Error("Failed to fetch u.item/u.data. Make sure both files are in the repo root.");
   }
 
-  const [itemText, dataText] = await Promise.all([
-    itemRes.text(),
-    dataRes.text()
-  ]);
-
+  const [itemText, dataText] = await Promise.all([itemRes.text(), dataRes.text()]);
   movies = parseItemData(itemText);
   ratings = parseRatingData(dataText);
-
   if (movies.size > numMovies) numMovies = movies.size;
 }
 
-// For console debugging
+/* Small debug helper & global exposure */
 window.__ml100k__ = {
-  get movies() { return movies; },
-  get ratings() { return ratings; },
-  get numUsers() { return numUsers; },
-  get numMovies() { return numMovies; }
+  get movies(){ return movies; },
+  get ratings(){ return ratings; },
+  get numUsers(){ return numUsers; },
+  get numMovies(){ return numMovies; }
 };
 
-// Export functions globally
 window.loadData = loadData;
 window.parseItemData = parseItemData;
 window.parseRatingData = parseRatingData;
