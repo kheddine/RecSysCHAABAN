@@ -1,164 +1,161 @@
-/* script.js — Matrix Factorization in TF.js, iOS-style UI updates */
+// script.js
+// ------- Model definition, training, and prediction (TensorFlow.js) -------
 
-let model = null;
+let model; // global model variable as required
 
-const $ = (id) => document.getElementById(id);
-const userSel  = () => $("user-select");
-const movieSel = () => $("movie-select");
-const resultEl = () => $("result");
-const predictBtn = () => $("predict-btn");
-
-function setStatus(html, { ok=false, warn=false } = {}) {
-  const card = $("status");
-  card.classList.remove("result-ok", "result-warn");
-  if (ok) card.classList.add("result-ok");
-  if (warn) card.classList.add("result-warn");
-  resultEl().innerHTML = html;
+// Utility: status updates
+function setStatus(msg){
+  const el = document.getElementById('result');
+  if (el) el.textContent = msg;
 }
 
-function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
-
-/* Populate dropdowns */
-function populateDropdowns() {
-  // Users
-  userSel().innerHTML = "";
-  for (let uid = 1; uid <= window.__ml100k__.numUsers; uid++) {
-    const opt = document.createElement("option");
-    opt.value = String(uid);
-    opt.textContent = `User ${uid}`;
-    userSel().appendChild(opt);
+// Populate UI dropdowns after data is loaded
+function populateUserSelect() {
+  const select = document.getElementById('user-select');
+  select.innerHTML = '';
+  for (const uid0 of userIdList) {
+    const opt = document.createElement('option');
+    opt.value = String(uid0);
+    opt.textContent = `User ${uid0 + 1}`;
+    select.appendChild(opt);
   }
-  userSel().disabled = false;
+}
 
-  // Movies (sorted by title)
-  const arr = Array.from(window.__ml100k__.movies.values())
-    .sort((a,b) => a.title.localeCompare(b.title));
-  movieSel().innerHTML = "";
-  for (const m of arr) {
-    const opt = document.createElement("option");
-    opt.value = String(m.id);
-    opt.textContent = m.year ? `${m.title} (${m.year})` : m.title;
-    movieSel().appendChild(opt);
+function populateMovieSelect() {
+  const select = document.getElementById('movie-select');
+  select.innerHTML = '';
+  for (let i = 0; i < movies.length; i++) {
+    const { id0, title } = movies[i];
+    const opt = document.createElement('option');
+    opt.value = String(id0);
+    opt.textContent = title || `Movie ${id0 + 1}`;
+    select.appendChild(opt);
   }
-  movieSel().disabled = false;
-
-  predictBtn().disabled = true; // enabled after training
 }
 
-/* Create MF model: user/movie embeddings + biases, dot product */
-function createModel(nUsers, nMovies, latentDim = 32) {
-  const userInput = tf.input({ shape:[1], dtype:"int32", name:"user" });
-  const movieInput = tf.input({ shape:[1], dtype:"int32", name:"movie" });
+// Create matrix factorization model with embeddings & dot product
+function createModel(numUsers, numMovies, latentDim = 16) {
+  const userInput = tf.input({shape: [1], dtype: 'int32', name: 'userInput'});
+  const movieInput = tf.input({shape: [1], dtype: 'int32', name: 'movieInput'});
 
-  const userEmb = tf.layers.embedding({
-    inputDim: nUsers, outputDim: latentDim, inputLength:1,
-    embeddingsInitializer: "glorotUniform", name: "userEmb"
-  }).apply(userInput);
-  const movieEmb = tf.layers.embedding({
-    inputDim: nMovies, outputDim: latentDim, inputLength:1,
-    embeddingsInitializer: "glorotUniform", name: "movieEmb"
-  }).apply(movieInput);
+  const userEmbeddingLayer = tf.layers.embedding({
+    inputDim: numUsers,
+    outputDim: latentDim,
+    embeddingsInitializer: 'glorotUniform',
+    name: 'userEmbedding'
+  });
+  const movieEmbeddingLayer = tf.layers.embedding({
+    inputDim: numMovies,
+    outputDim: latentDim,
+    embeddingsInitializer: 'glorotUniform',
+    name: 'movieEmbedding'
+  });
 
-  const userBias = tf.layers.embedding({
-    inputDim: nUsers, outputDim: 1, inputLength:1, name:"userBias",
-    embeddingsInitializer: "zeros"
-  }).apply(userInput);
-  const movieBias = tf.layers.embedding({
-    inputDim: nMovies, outputDim: 1, inputLength:1, name:"movieBias",
-    embeddingsInitializer: "zeros"
-  }).apply(movieInput);
+  const userEmbedding = userEmbeddingLayer.apply(userInput);
+  const movieEmbedding = movieEmbeddingLayer.apply(movieInput);
 
-  const u = tf.layers.flatten().apply(userEmb);
-  const m = tf.layers.flatten().apply(movieEmb);
-  const ub = tf.layers.flatten().apply(userBias);
-  const mb = tf.layers.flatten().apply(movieBias);
+  const userVec = tf.layers.flatten().apply(userEmbedding);
+  const movieVec = tf.layers.flatten().apply(movieEmbedding);
 
-  const dot = tf.layers.dot({ axes:1 }).apply([u, m]);
-  const pred = tf.layers.add().apply([dot, ub, mb]); // simple & fast
+  // Dot product of latent factors
+  const dot = tf.layers.dot({axes: -1, name: 'dot'}).apply([userVec, movieVec]);
 
-  return tf.model({ inputs:[userInput, movieInput], outputs: pred, name: "MF" });
+  // Optional linear scaling layer
+  const output = tf.layers.dense({units: 1, activation: 'linear', name: 'prediction'})
+                          .apply(dot);
+
+  const mfModel = tf.model({
+    inputs: [userInput, movieInput],
+    outputs: output,
+    name: 'mf_recommender'
+  });
+
+  return mfModel;
 }
 
-/* Train on full ratings (1-based IDs -> 0-based indices) */
+// Train the model end-to-end
 async function trainModel() {
-  const nUsers = window.__ml100k__.numUsers;
-  const nMovies = window.__ml100k__.numMovies;
+  model = createModel(numUsers, numMovies, 32);
 
-  model = createModel(nUsers, nMovies, 24);
-  model.compile({ optimizer: tf.train.adam(0.001), loss: "meanSquaredError" });
+  model.compile({
+    optimizer: tf.train.adam(0.001),
+    loss: 'meanSquaredError'
+  });
 
-  const N = window.__ml100k__.ratings.length;
-  const uIdx = new Int32Array(N);
-  const iIdx = new Int32Array(N);
-  const y    = new Float32Array(N);
+  // Prepare tensors (2D int32 for inputs, 2D float32 for labels)
+  const N = ratingsData.ratings.length;
 
-  for (let k = 0; k < N; k++) {
-    const r = window.__ml100k__.ratings[k];
-    uIdx[k] = r.userId - 1;
-    iIdx[k] = r.movieId - 1;
-    y[k]    = r.rating;
-  }
+  const userTensor = tf.tensor2d(ratingsData.userIds, [N, 1], 'int32');
+  const movieTensor = tf.tensor2d(ratingsData.movieIds, [N, 1], 'int32');
+  const ratingTensor = tf.tensor2d(ratingsData.ratings, [N, 1], 'float32');
 
-  const uT = tf.tensor2d(uIdx, [N,1], "int32");
-  const iT = tf.tensor2d(iIdx, [N,1], "int32");
-  const yT = tf.tensor2d(y,    [N,1], "float32");
+  const BATCH = 64;
+  const EPOCHS = 8;
 
-  const epochs = 6, batch = 1024;
+  setStatus(`Training model… (epochs: ${EPOCHS}, batch: ${BATCH})`);
 
-  setStatus(`
-    <div class="spinner" aria-hidden="true"></div>
-    <div><strong>Training</strong> on ${N.toLocaleString()} ratings…</div>
-  `);
-
-  await model.fit([uT, iT], yT, {
-    epochs, batchSize: batch, shuffle: true, verbose: 0,
+  await model.fit([userTensor, movieTensor], ratingTensor, {
+    epochs: EPOCHS,
+    batchSize: BATCH,
+    shuffle: true,
+    verbose: 0,
     callbacks: {
-      onEpochEnd: async (e, logs) => {
-        setStatus(`
-          <div class="spinner" aria-hidden="true"></div>
-          <div><strong>Epoch ${e+1}/${epochs}</strong> · loss ${logs.loss.toFixed(4)}</div>
-        `);
-        await tf.nextFrame();
+      onEpochEnd: async (epoch, logs) => {
+        setStatus(`Training… epoch ${epoch+1}/${EPOCHS} — loss: ${logs.loss.toFixed(4)}`);
+        await tf.nextFrame(); // keep UI responsive
       }
     }
   });
 
-  uT.dispose(); iT.dispose(); yT.dispose();
+  userTensor.dispose();
+  movieTensor.dispose();
+  ratingTensor.dispose();
 
-  predictBtn().disabled = false;
-  setStatus(`✅ <strong>Model ready.</strong> Choose a user and a movie, then tap <em>Predict Rating</em>.`, { ok:true });
+  setStatus('Model trained ✅ Select a user and a movie, then click “Predict Rating”.');
 }
 
-/* Predict for chosen user+movie */
+// Predict rating for selected user & movie
 async function predictRating() {
-  if (!model) return;
-  const uid = parseInt(userSel().value, 10);
-  const mid = parseInt(movieSel().value, 10);
+  if (!model) {
+    setStatus('Model not ready yet. Please wait for training to finish.');
+    return;
+  }
 
-  const uT = tf.tensor2d([uid-1], [1,1], "int32");
-  const mT = tf.tensor2d([mid-1], [1,1], "int32");
-  const out = model.predict([uT, mT]);
-  const val = (await out.data())[0];
-  uT.dispose(); mT.dispose(); out.dispose();
+  const userSel = document.getElementById('user-select');
+  const movieSel = document.getElementById('movie-select');
 
-  const clipped = clamp(val, 1, 5);
-  const mov = window.__ml100k__.movies.get(mid);
-  const title = mov ? (mov.year ? `${mov.title} (${mov.year})` : mov.title) : `Movie ${mid}`;
+  const userId0 = Number(userSel.value);
+  const movieId0 = Number(movieSel.value);
 
-  setStatus(`📈 Predicted for <strong>User ${uid}</strong> → <em>${title}</em>: <strong>${clipped.toFixed(2)}</strong> (raw ${val.toFixed(2)})`, { ok:true });
+  // Create 2D int32 tensors of shape [1,1]
+  const uT = tf.tensor2d([[userId0]], [1,1], 'int32');
+  const mT = tf.tensor2d([[movieId0]], [1,1], 'int32');
+
+  const predTensor = model.predict([uT, mT]);
+  const predArr = await predTensor.data();
+
+  uT.dispose();
+  mT.dispose();
+  predTensor.dispose();
+
+  // Nicely format and clamp to [1,5] for display
+  const raw = Number(predArr[0]);
+  const clipped = Math.min(5, Math.max(1, raw));
+  const title = movies[movieId0]?.title ?? `Movie ${movieId0+1}`;
+
+  setStatus(`Predicted rating for <strong>User ${userId0+1}</strong> on <strong>${title}</strong>: <span style="color:#22d3ee;font-weight:800">${clipped.toFixed(2)}</span>`);
 }
 
-/* Init */
-window.addEventListener("load", async () => {
+// Boot sequence
+window.onload = (async () => {
   try {
-    setStatus(`<div class="spinner"></div><div><strong>Status:</strong> Loading data…</div>`);
+    setStatus('Loading MovieLens data…');
     await loadData();
-    populateDropdowns();
-    setStatus(`<div class="spinner"></div><div><strong>Status:</strong> Starting training…</div>`);
-    await tf.nextFrame();
+    populateUserSelect();
+    populateMovieSelect();
     await trainModel();
-  } catch (e) {
-    console.error(e);
-    setStatus(`❌ <strong>Error:</strong> ${e.message}`, { warn:true });
+  } catch (err) {
+    console.error(err);
+    setStatus('Error: ' + (err?.message || 'Failed to initialize.'));
   }
 });
