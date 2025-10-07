@@ -1,0 +1,186 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1"
+  />
+  <title>Two-Tower Movie Recommender - Deep Learning Comparison</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="description" content="Interactive demo comparing a baseline collaborative filtering model and a deep two-tower MLP model on MovieLens 100K." />
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <h1>Two-Tower Movie Recommender - Deep Learning Comparison</h1>
+      <p class="subtitle">
+        Educational demo comparing a baseline user-based collaborative filtering model
+        vs. a deep two-tower model that integrates user demographics and movie genres.
+      </p>
+      <p class="attribution">
+        Data: <strong>MovieLens 100K</strong> — upload <code>u.data</code>, <code>u.item</code>, and <code>u.user</code>.
+      </p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Data Loader -->
+    <section class="card" id="data-loader">
+      <h2>Load MovieLens Files</h2>
+      <div class="uploader-grid">
+        <label class="file-label">
+          <span>u.data</span>
+          <input type="file" id="file-data" accept=".data,.txt" />
+        </label>
+        <label class="file-label">
+          <span>u.item</span>
+          <input type="file" id="file-item" accept=".item,.txt" />
+        </label>
+        <label class="file-label">
+          <span>u.user</span>
+          <input type="file" id="file-user" accept=".user,.txt" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="btn-parse" class="btn primary" disabled>Parse Files</button>
+        <div id="parse-status" class="status muted">Select all three files to enable parsing.</div>
+      </div>
+      <div id="parse-progress" class="progress hidden">
+        <div class="spinner"></div>
+        <span id="parse-progress-text">Parsing files…</span>
+      </div>
+      <div id="parse-errors" class="errors hidden" role="alert"></div>
+    </section>
+
+    <!-- User Controls -->
+    <section class="card" id="controls" aria-live="polite" aria-busy="false">
+      <h2>Select a User</h2>
+      <div class="controls-grid">
+        <div>
+          <label for="user-select">User ID</label>
+          <select id="user-select" disabled>
+            <option value="">— Load data first —</option>
+          </select>
+        </div>
+        <div class="user-info" id="user-info">
+          <div><strong>Age:</strong> <span data-age>—</span></div>
+          <div><strong>Gender:</strong> <span data-gender>—</span></div>
+          <div><strong>Occupation:</strong> <span data-occupation>—</span></div>
+          <div class="muted small">(From <code>u.user</code>)</div>
+        </div>
+        <div class="cta">
+          <button id="btn-recommend" class="btn accent" disabled>Get Recommendations</button>
+          <div id="run-status" class="status muted">Ready.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recommendations -->
+    <section class="compare-grid" id="recs-section">
+      <div class="card">
+        <h3>Baseline Model Recommendations</h3>
+        <p class="muted small">
+          User-based collaborative filtering (ratings only).
+        </p>
+        <div class="table-wrap">
+          <table id="baseline-table" class="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Movie Title</th>
+                <th>Pred. Rating</th>
+                <th>Genres</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Deep Learning Model Recommendations</h3>
+        <p class="muted small">
+          Two-tower MLP (user demographics + movie genres).
+        </p>
+        <div class="table-wrap">
+          <table id="deep-table" class="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Movie Title</th>
+                <th>Pred. Rating</th>
+                <th>Genres</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Comparison -->
+    <section class="card" id="metrics-section">
+      <h2>Model Performance Comparison</h2>
+      <p class="muted small">
+        Metrics computed on a user-specific holdout set (ratings not used for inference).
+        Relevant items are those the user rated ≥ 4.
+      </p>
+      <div class="table-wrap">
+        <table class="table metrics">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Baseline</th>
+              <th>Deep Learning</th>
+              <th>Δ (Deep − Base)</th>
+            </tr>
+          </thead>
+          <tbody id="metrics-body">
+            <tr>
+              <td>Precision@10</td>
+              <td data-mbase-p10>—</td>
+              <td data-mdeep-p10>—</td>
+              <td data-mdiff-p10>—</td>
+            </tr>
+            <tr>
+              <td>Recall@10</td>
+              <td data-mbase-r10>—</td>
+              <td data-mdeep-r10>—</td>
+              <td data-mdiff-r10>—</td>
+            </tr>
+            <tr>
+              <td>NDCG@10</td>
+              <td data-mbase-ndcg>—</td>
+              <td data-mdeep-ndcg>—</td>
+              <td data-mdiff-ndcg>—</td>
+            </tr>
+            <tr>
+              <td>Feature Usage</td>
+              <td>Ratings Only</td>
+              <td><span class="badge">Genres</span> <span class="badge">Demographics</span></td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="legend muted small">
+        <span class="dot dot-up"></span> Green numbers indicate improvements.
+      </div>
+    </section>
+
+    <!-- Fallback & Toasts -->
+    <div id="toast" class="toast hidden" role="status">Ready.</div>
+  </main>
+
+  <footer class="container footer">
+    <div>
+      Built for teaching purposes. No external dependencies, 100% client-side.
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
