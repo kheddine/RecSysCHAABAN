@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Playlist Transformer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h2>Initializing Spotify Chatbot</h2>
+            <p>Loading music data and recommendation engine...</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container" id="mainContainer" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-music"></i> Spotify Playlist Transformer</h1>
+                <p class="subtitle">AI-powered playlist customization with mood-based recommendations</p>
+            </div>
+            <div class="header-right">
+                <div class="stats">
+                    <span id="statsTracks">-- tracks</span>
+                    <span id="statsPlaylist">-- in playlist</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Chat & Recommendations -->
+            <div class="left-panel">
+                <!-- Chat Interface -->
+                <section class="chat-section">
+                    <h2><i class="fas fa-robot"></i> Chat with Playlist AI</h2>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot">
+                                <div class="message-content">
+                                    <strong>Playlist AI:</strong> Hi! I'm your playlist assistant. Tell me how you want to transform your playlist! Try words like "energetic", "chill", "acoustic", or "dance".
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Type your mood or request... (e.g., 'Make it more energetic')">
+                            <button id="sendChat" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="quick-moods">
+                            <span>Quick moods:</span>
+                            <button class="mood-btn" data-mood="energetic">⚡ Energetic</button>
+                            <button class="mood-btn" data-mood="chill">😌 Chill</button>
+                            <button class="mood-btn" data-mood="acoustic">🎸 Acoustic</button>
+                            <button class="mood-btn" data-mood="dance">💃 Dance</button>
+                            <button class="mood-btn" data-mood="sad">😢 Sad</button>
+                            <button class="mood-btn" data-mood="happy">😊 Happy</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recommendations -->
+                <section class="recommendations-section">
+                    <h2><i class="fas fa-lightbulb"></i> Recommendations</h2>
+                    <div class="recommendations-list" id="recommendationsList">
+                        <!-- Recommendations will appear here -->
+                        <div class="empty-state">
+                            <i class="fas fa-compass"></i>
+                            <p>Send a message to get recommendations!</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Panel: Playlist & Controls -->
+            <div class="right-panel">
+                <!-- Playlist -->
+                <section class="playlist-section">
+                    <div class="playlist-header">
+                        <h2><i class="fas fa-list-music"></i> Your Playlist</h2>
+                        <div class="playlist-controls">
+                            <button id="clearPlaylist" class="btn-secondary">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                            <button id="exportCSV" class="btn-success">
+                                <i class="fas fa-file-export"></i> Export CSV
+                            </button>
+                            <span class="playlist-count" id="playlistCount">0 tracks</span>
+                        </div>
+                    </div>
+                    <div class="playlist-container">
+                        <div class="playlist-tracks" id="playlistTracks">
+                            <!-- Playlist tracks will appear here -->
+                            <div class="empty-state">
+                                <i class="fas fa-music"></i>
+                                <p>Your playlist is empty. Add some tracks!</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Search -->
+                <section class="search-section">
+                    <h2><i class="fas fa-search"></i> Search Tracks</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by song, artist, or genre...">
+                        <button id="searchBtn" class="btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="search-results" id="searchResults">
+                        <!-- Search results will appear here -->
+                    </div>
+                </section>
+
+                <!-- System Info -->
+                <section class="info-section">
+                    <h2><i class="fas fa-info-circle"></i> How It Works</h2>
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <i class="fas fa-brain"></i>
+                            <h3>AI Analysis</h3>
+                            <p>Analyzes audio features to understand your playlist's mood</p>
+                        </div>
+                        <div class="info-card">
+                            <i class="fas fa-sliders-h"></i>
+                            <h3>Smart Adjustments</h3>
+                            <p>Adjusts energy, valence, tempo based on your requests</p>
+                        </div>
+                        <div class="info-card">
+                            <i class="fas fa-plus-circle"></i>
+                            <h3>Add & Customize</h3>
+                            <p>Add recommendations to build your perfect playlist</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Spotify Playlist Transformer • Powered by Machine Learning • Made with <i class="fas fa-heart"></i></p>
+            <p class="footer-links">
+                <a href="#"><i class="fab fa-github"></i> GitHub</a>
+                •
+                <span id="statusIndicator" class="status-indicator">
+                    <i class="fas fa-circle"></i> <span id="statusText">Connecting...</span>
+                </span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
