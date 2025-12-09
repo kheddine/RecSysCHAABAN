@@ -1,0 +1,74 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  ⬇️  DOWNLOAD THESE 5 FILES ⬇️                            ║
+║                                                                            ║
+║                Just these! That's all you need!                           ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+✅ FILE 1: app_enhanced.py
+   Click link and save to your computer
+   (This is the backend/server)
+
+
+✅ FILE 2: index_enhanced.html
+   Click link and save to your computer
+   (This is the website/interface)
+
+
+✅ FILE 3: sample_spotify_data.csv
+   Click link and save to your computer
+   (This is the test music data - 1,000 songs)
+
+
+✅ FILE 4: run.sh
+   Click link and save to your computer
+   (This starts everything automatically)
+
+
+✅ FILE 5: requirements.txt
+   Click link and save to your computer
+   (This lists what Python packages to install)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+AFTER DOWNLOADING:
+
+1. Make a new folder on your computer
+   Example: "spotify-mixer"
+
+2. Put all 5 files in that folder
+
+3. Open Terminal/Command Prompt
+
+4. Go to your folder:
+   cd ~/spotify-mixer
+   (or wherever you put the files)
+
+5. Run this command:
+   bash run.sh
+   
+   (Windows: python app_enhanced.py, then in another window: python -m http.server 8000)
+
+6. Wait 5 seconds, then open:
+   http://localhost:8000
+
+7. That's it! The app opens in your browser!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+NO OTHER FILES NEEDED!
+
+Just these 5:
+✓ app_enhanced.py
+✓ index_enhanced.html
+✓ sample_spotify_data.csv
+✓ run.sh
+✓ requirements.txt
+
+Everything else is optional documentation.
+
+═══════════════════════════════════════════════════════════════════════════════

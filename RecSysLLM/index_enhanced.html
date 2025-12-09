@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Mood Mixer Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --spotify-black: #121212;
+            --spotify-green: #1DB954;
+            --spotify-green-hover: #1ed760;
+            --spotify-white: #ffffff;
+            --spotify-gray-dark: #191414;
+            --spotify-gray-mid: #282828;
+            --spotify-gray-light: #404040;
+            --spotify-text: #b3b3b3;
+            --spotify-text-bright: #ffffff;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff006e;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--spotify-black) 0%, var(--spotify-gray-dark) 100%);
+            color: var(--spotify-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== PAGES ===== */
+        .page {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* ===== ADMIN PAGE ===== */
+        .admin-page {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: slideInDown 0.8s ease;
+        }
+
+        .admin-title {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--spotify-green), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .admin-subtitle {
+            font-size: 16px;
+            color: var(--spotify-text);
+        }
+
+        .admin-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .step-card {
+            background: linear-gradient(135deg, var(--spotify-gray-mid) 0%, var(--spotify-gray-dark) 100%);
+            border: 2px solid var(--spotify-gray-light);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            animation: slideInUp 0.6s ease;
+            animation-fill-mode: both;
+        }
+
+        .step-card:nth-child(1) { animation-delay: 0.1s; }
+        .step-card:nth-child(2) { animation-delay: 0.2s; }
+        .step-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .step-card:hover {
+            background: linear-gradient(135deg, var(--spotify-gray-light) 0%, var(--spotify-gray-mid) 100%);
+            border-color: var(--spotify-green);
+            transform: translateY(-5px);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--spotify-green), var(--accent-purple));
+            color: var(--spotify-black);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--spotify-text-bright);
+            margin-bottom: 15px;
+        }
+
+        .step-description {
+            font-size: 14px;
+            color: var(--spotify-text);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* ===== FILE UPLOAD ===== */
+        .upload-area {
+            border: 3px dashed var(--spotify-green);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(29, 185, 84, 0.05);
+        }
+
+        .upload-area:hover {
+            background: rgba(29, 185, 84, 0.1);
+            border-color: var(--spotify-green-hover);
+        }
+
+        .upload-area.drag-over {
+            background: rgba(29, 185, 84, 0.2);
+            border-color: var(--spotify-green-hover);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--spotify-text);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* ===== DATA PREVIEW ===== */
+        .data-preview {
+            background: var(--spotify-gray-dark);
+            border: 1px solid var(--spotify-gray-light);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-table {
+            width: 100%;
+            font-size: 12px;
+            color: var(--spotify-text);
+        }
+
+        .preview-table th {
+            color: var(--spotify-green);
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 5px;
+            border-bottom: 1px solid var(--spotify-gray-light);
+        }
+
+        .preview-table td {
+            padding: 8px 5px;
+            border-bottom: 1px solid var(--spotify-gray-light);
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: rgba(29, 185, 84, 0.1);
+            border: 1px solid var(--spotify-green);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--spotify-text);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--spotify-green);
+            margin-top: 5px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--spotify-green), var(--spotify-green-hover));
+            color: var(--spotify-black);
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(29, 185, 84, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--spotify-gray-light);
+            color: var(--spotify-text-bright);
+        }
+
+        .btn-secondary:hover {
+            background: var(--spotify-gray-mid);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            display: flex;
+            gap: 4px;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--spotify-green);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        /* ===== ALERTS ===== */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(29, 185, 84, 0.2);
+            border-left: 4px solid var(--spotify-green);
+            color: var(--spotify-green);
+        }
+
+        .alert-error {
+            background: rgba(255, 0, 110, 0.2);
+            border-left: 4px solid var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        .alert-info {
+            background: rgba(157, 78, 221, 0.2);
+            border-left: 4px solid var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        /* ===== APP PAGE ===== */
+        .app-page {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--spotify-gray-dark) 0%, var(--spotify-black) 100%);
+            border-right: 1px solid var(--spotify-gray-light);
+            padding: 30px 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--spotify-gray-light);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--spotify-green);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--spotify-black);
+        }
+
+        .sidebar-logo-text {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--spotify-text-bright);
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--spotify-text);
+            letter-spacing: 1.5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 20px;
+            height: 2px;
+            background: var(--spotify-green);
+            border-radius: 1px;
+        }
+
+        .playlist-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 10px;
+        }
+
+        .track-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--spotify-gray-light);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .track-item:hover {
+            background: rgba(29, 185, 84, 0.1);
+            border-color: var(--spotify-green);
+            transform: translateX(4px);
+        }
+
+        .track-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--spotify-text-bright);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 11px;
+            color: var(--spotify-text);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-rows: 1fr auto;
+            overflow: hidden;
+            background: var(--spotify-black);
+        }
+
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 40px;
+            gap: 20px;
+        }
+
+        .input-area {
+            padding: 30px 40px;
+            background: var(--spotify-gray-dark);
+            border-top: 1px solid var(--spotify-gray-light);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--spotify-gray-light);
+            border: 2px solid var(--spotify-gray-light);
+            border-radius: 24px;
+            color: var(--spotify-text-bright);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--spotify-green);
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--spotify-green);
+            color: var(--spotify-black);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            background: var(--spotify-green-hover);
+            transform: scale(1.08);
+        }
+
+        .send-btn.disabled {
+            background: var(--spotify-gray-light);
+            cursor: not-allowed;
+        }
+
+        /* ===== MESSAGE ===== */
+        .message {
+            display: flex;
+            gap: 15px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-content {
+            background: var(--spotify-gray-light);
+            color: var(--spotify-text-bright);
+            border-left: 3px solid var(--spotify-green);
+        }
+
+        .message.user .message-content {
+            background: var(--spotify-green);
+            color: var(--spotify-black);
+            border-radius: 12px 0 12px 12px;
+            font-weight: 500;
+        }
+
+        /* ===== RECOMMENDATIONS ===== */
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .rec-card {
+            background: var(--spotify-gray-mid);
+            border: 1px solid var(--spotify-gray-light);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rec-card:hover {
+            background: rgba(29, 185, 84, 0.1);
+            border-color: var(--spotify-green);
+            transform: translateY(-4px);
+        }
+
+        .rec-number {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--spotify-green), var(--accent-purple));
+            color: var(--spotify-white);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .rec-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--spotify-text-bright);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rec-artist {
+            font-size: 11px;
+            color: var(--spotify-text);
+            margin-bottom: 6px;
+        }
+
+        .rec-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+        }
+
+        .rec-similarity {
+            background: rgba(29, 185, 84, 0.2);
+            color: var(--spotify-green);
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .add-btn {
+            width: 20px;
+            height: 20px;
+            background: var(--spotify-green);
+            color: var(--spotify-black);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-btn:hover {
+            background: var(--spotify-green-hover);
+            transform: scale(1.15);
+        }
+
+        /* ===== NAVIGATION ===== */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 0 40px;
+            padding-top: 20px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid var(--spotify-gray-light);
+            border-radius: 8px;
+            color: var(--spotify-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-tab:hover {
+            border-color: var(--spotify-green);
+            color: var(--spotify-green);
+        }
+
+        .nav-tab.active {
+            background: var(--spotify-green);
+            color: var(--spotify-black);
+            border-color: var(--spotify-green);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--spotify-gray-light);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--spotify-green);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .admin-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .app-page {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .chat-area {
+                padding: 20px;
+            }
+
+            .input-area {
+                padding: 20px;
+            }
+
+            .recommendations {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ADMIN PAGE -->
+    <div class="page active" id="adminPage">
+        <div class="admin-page">
+            <div class="admin-header">
+                <div class="admin-title">🎵 Spotify Mood Mixer Pro</div>
+                <div class="admin-subtitle">Complete Platform for Mood-Based Music Recommendations</div>
+            </div>
+
+            <div class="admin-steps">
+                <!-- STEP 1: UPLOAD -->
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Upload Data</div>
+                    <div class="step-description">
+                        Upload your Spotify CSV file with audio features
+                    </div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-text">Drag & drop CSV or click to select</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".csv">
+                    <div id="uploadAlert"></div>
+                    <div id="dataPreview"></div>
+                </div>
+
+                <!-- STEP 2: CLEAN -->
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Clean Data</div>
+                    <div class="step-description">
+                        Remove duplicates, handle missing values, validate ranges
+                    </div>
+                    <button class="btn btn-primary" id="cleanBtn" onclick="cleanData()" disabled>
+                        Clean Data
+                    </button>
+                    <div id="cleanAlert"></div>
+                </div>
+
+                <!-- STEP 3: TRAIN -->
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Train Model</div>
+                    <div class="step-description">
+                        Initialize recommendation system and start mixing
+                    </div>
+                    <button class="btn btn-primary" id="trainBtn" onclick="trainModel()" disabled>
+                        Train & Go to App
+                    </button>
+                    <div id="trainAlert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP PAGE -->
+    <div class="page" id="appPage">
+        <div class="app-page">
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <div class="sidebar-logo-icon">♪</div>
+                        <div class="sidebar-logo-text">Mood Mixer</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="goToAdmin()" style="width: 100%; margin-top: 15px; font-size: 12px;">
+                        ← Back to Setup
+                    </button>
+                </div>
+
+                <div class="section-title">Current Playlist</div>
+                <div class="playlist-container" id="playlistContainer">
+                    <p style="color: var(--spotify-text); font-size: 12px; text-align: center; padding: 20px;">
+                        Ready to add tracks...
+                    </p>
+                </div>
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="main-content">
+                <div class="chat-area" id="chatArea"></div>
+
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <input
+                            type="text"
+                            class="input-field"
+                            id="messageInput"
+                            placeholder="'Make it more energetic' or 'sad and acoustic'..."
+                            onkeydown="handleKeyPress(event)"
+                        >
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE =====
+        let state = {
+            apiUrl: 'http://localhost:5000',
+            currentFile: null,
+            dataCleaned: false,
+            modelTrained: false,
+            currentPlaylist: [],
+            chatHistory: []
+        };
+
+        // ===== FILE UPLOAD =====
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFileSelect(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files);
+        });
+
+        function handleFileSelect(files) {
+            if (files.length === 0) return;
+
+            const file = files[0];
+            if (!file.name.endsWith('.csv')) {
+                showAlert('uploadAlert', 'Please upload a CSV file', 'error');
+                return;
+            }
+
+            state.currentFile = file;
+            uploadFile(file);
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${state.apiUrl}/api/upload-data`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showAlert('uploadAlert', 
+                        `✓ Uploaded: ${result.rows} rows, ${result.columns} columns`, 
+                        'success');
+                    
+                    // Show preview
+                    const preview = `
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-label">Rows</div>
+                                <div class="stat-value">${result.rows.toLocaleString()}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Columns</div>
+                                <div class="stat-value">${result.columns}</div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('dataPreview').innerHTML = preview;
+
+                    // Enable clean button
+                    document.getElementById('cleanBtn').disabled = false;
+                    state.dataCleaned = false;
+                    document.getElementById('trainBtn').disabled = true;
+                } else {
+                    showAlert('uploadAlert', result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('uploadAlert', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function cleanData() {
+            if (!state.currentFile) return;
+
+            showAlert('cleanAlert', 'Cleaning data...', 'info');
+            document.getElementById('cleanBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${state.apiUrl}/api/clean-data`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const stats = result.stats;
+                    showAlert('cleanAlert',
+                        `✓ Cleaned! Removed ${stats.removed_duplicates + stats.removed_missing} rows. Final: ${stats.final_rows} rows`,
+                        'success');
+                    
+                    state.dataCleaned = true;
+                    document.getElementById('trainBtn').disabled = false;
+                } else {
+                    showAlert('cleanAlert', result.message, 'error');
+                    document.getElementById('cleanBtn').disabled = false;
+                }
+            } catch (error) {
+                showAlert('cleanAlert', `Error: ${error.message}`, 'error');
+                document.getElementById('cleanBtn').disabled = false;
+            }
+        }
+
+        async function trainModel() {
+            if (!state.dataCleaned) return;
+
+            showAlert('trainAlert', 'Training model...', 'info');
+            document.getElementById('trainBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${state.apiUrl}/api/train-model`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: ''  // Optional HuggingFace API key
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showAlert('trainAlert',
+                        `✓ Model trained on ${result.track_count} tracks!`,
+                        'success');
+                    
+                    state.modelTrained = true;
+                    state.currentPlaylist = result.playlist;
+                    goToApp();
+                } else {
+                    showAlert('trainAlert', result.message, 'error');
+                    document.getElementById('trainBtn').disabled = false;
+                }
+            } catch (error) {
+                showAlert('trainAlert', `Error: ${error.message}`, 'error');
+                document.getElementById('trainBtn').disabled = false;
+            }
+        }
+
+        // ===== PAGE NAVIGATION =====
+        function goToAdmin() {
+            document.getElementById('adminPage').classList.add('active');
+            document.getElementById('appPage').classList.remove('active');
+        }
+
+        function goToApp() {
+            document.getElementById('adminPage').classList.remove('active');
+            document.getElementById('appPage').classList.add('active');
+            updatePlaylistUI();
+            addWelcomeMessage();
+            document.getElementById('messageInput').focus();
+        }
+
+        // ===== CHAT =====
+        function addWelcomeMessage() {
+            addMessage('bot', '🎵 Welcome! Tell me what vibe you\'re looking for and I\'ll transform your playlist. Try "make it more energetic" or "sad acoustic vibes"');
+        }
+
+        function addMessage(type, content, metadata = {}) {
+            const message = { type, content, timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), ...metadata };
+            state.chatHistory.push(message);
+            renderMessage(message);
+
+            const chatArea = document.getElementById('chatArea');
+            setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 0);
+        }
+
+        function renderMessage(message) {
+            const chatArea = document.getElementById('chatArea');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${message.type}`;
+
+            if (message.type === 'bot' && message.recommendations) {
+                messageEl.innerHTML = `
+                    <div style="width: 100%;">
+                        <div class="message-content">${escapeHtml(message.content)}</div>
+                        <div class="recommendations">
+                            ${message.recommendations.map((rec, idx) => `
+                                <div class="rec-card">
+                                    <div class="rec-number">${idx + 1}</div>
+                                    <div class="rec-title">${escapeHtml(rec.name)}</div>
+                                    <div class="rec-artist">${escapeHtml(rec.artist)}</div>
+                                    <div class="rec-meta">
+                                        <span class="rec-similarity">${(rec.similarity * 100).toFixed(0)}%</span>
+                                        <button class="add-btn" onclick="addTrackToPlaylist(${rec.index}, '${escapeHtml(rec.name)}', '${escapeHtml(rec.artist)}')">+</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageEl.innerHTML = `
+                    <div class="message-content">${escapeHtml(message.content)}</div>
+                `;
+            }
+
+            chatArea.appendChild(messageEl);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${state.apiUrl}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    addMessage('bot', result.interpretation, {
+                        recommendations: result.recommendations || []
+                    });
+                } else {
+                    addMessage('bot', `❌ Error: ${result.message}`);
+                }
+            } catch (error) {
+                addMessage('bot', `❌ Connection error: ${error.message}`);
+            } finally {
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        async function addTrackToPlaylist(index, name, artist) {
+            try {
+                const response = await fetch(`${state.apiUrl}/api/add-tracks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ indices: [index] })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    state.currentPlaylist.push({ name, artist, index });
+                    updatePlaylistUI();
+                    addMessage('bot', `✅ Added "${name}" by ${artist}`);
+                }
+            } catch (error) {
+                addMessage('bot', `❌ Error: ${error.message}`);
+            }
+        }
+
+        function updatePlaylistUI() {
+            const container = document.getElementById('playlistContainer');
+            if (state.currentPlaylist.length === 0) {
+                container.innerHTML = '<p style="color: var(--spotify-text); font-size: 12px; text-align: center; padding: 20px;">Ready to add tracks...</p>';
+            } else {
+                container.innerHTML = state.currentPlaylist.map(track => `
+                    <div class="track-item">
+                        <div class="track-name">${escapeHtml(track.name)}</div>
+                        <div class="track-artist">${escapeHtml(track.artist)}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function showAlert(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
